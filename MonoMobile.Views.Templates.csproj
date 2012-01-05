@@ -46,6 +46,9 @@
     <Compile Include="Templates\HtmlAttribute.cs" />
     <Compile Include="Registrations.cs" />
     <Compile Include="Templates\ProgressButtonAttribute.cs" />
+    <Compile Include="Templates\AccessoryIndicatorAttribute.cs" />
+    <Compile Include="UIGlassyButton.cs" />
+    <Compile Include="Templates\AccessoryButtonAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Cell Views\" />

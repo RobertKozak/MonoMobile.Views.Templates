@@ -31,6 +31,7 @@ namespace MonoMobile.Views
 {
 	using System;
 	using System.Drawing;
+	using System.Linq;
 	using System.Reflection;
 	using System.Threading;
 	using MonoTouch.Foundation;
@@ -39,6 +40,8 @@ namespace MonoMobile.Views
 	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
 	public class LoadMoreAttribute : ButtonAttribute, ISizeable
 	{
+		public override Type CellViewType { get { return typeof(LoadMoreCellView); } }
+
 		public LoadMoreAttribute(): this(null)
 		{
 		}
@@ -59,25 +62,23 @@ namespace MonoMobile.Views
 	}
 
 	[Preserve(AllMembers = true)]
-	public class LoadMoreCellView : CellView<MethodInfo>, ISelectable, ICellContent
+	public class LoadMoreCellView : CellView<MemberInfo>, ISelectable, ICellContent
 	{
 		private LoadMoreAttribute LoadMoreData { get { return (LoadMoreAttribute)CellViewTemplate; } }
 			
 		private readonly UIActivityIndicatorView _ActivityIndicator;
-		private const int pad = 10;
-		private const int indicatorSize = 20;
+		private const int _TopPosition = 11;
+		private const int _IndicatorSize = 20;
 		private DateTime? _ShowStarted;
 		private NSTimer _Timer;
 
 		public UIView CellContentView { get; set; }
-
 		public UIView CellBackgroundView { get; set; }
-
 		public UIView CellSelectedBackgroundView { get; set; }
 
 		public LoadMoreCellView(RectangleF frame) : base(frame)
 		{
-			_ActivityIndicator = new UIActivityIndicatorView(new RectangleF(indicatorSize * 2, pad, indicatorSize, indicatorSize))
+			_ActivityIndicator = new UIActivityIndicatorView(new RectangleF((_IndicatorSize * 2) - 4, _TopPosition, _IndicatorSize, _IndicatorSize))
 				{
 					ActivityIndicatorViewStyle = UIActivityIndicatorViewStyle.White,
 					Hidden = true,
@@ -114,6 +115,8 @@ namespace MonoMobile.Views
 			cell.TextLabel.Text = Caption;
 			cell.TextLabel.TextAlignment = UITextAlignment.Center;
 			cell.Accessory = UITableViewCellAccessory.None;
+
+			cell.TextLabel.TextColor = Theme.TextColor;
 		}
 
 		public virtual void Selected(DialogViewController controller, UITableView tableView, object item, NSIndexPath indexPath)
@@ -131,18 +134,23 @@ namespace MonoMobile.Views
 			tableView.DeselectRow(indexPath, true);
 		}
 			
-		protected void ExecuteMethod(Action asyncCompleted)
+		protected virtual void ExecuteMethod(Action asyncCompleted)
 		{
 			var method = DataContext.Member as MethodInfo;
-			var parameters = method.GetParameters();
-			if (parameters == null || parameters.Length == 0)
-			{
-				method.Invoke(DataContext.Source, null);
-				asyncCompleted();
-			}
-			else
-			{
-				method.Invoke(DataContext.Source, new object[] { asyncCompleted });
+			if (method != null)
+			{	
+				var parameters = method.GetParameters();
+				if (parameters == null || parameters.Length == 0)
+				{
+					method.Invoke(DataContext.Source, null);
+					asyncCompleted();
+				}
+				else if (parameters != null && parameters.Last().ParameterType == typeof(Action))
+				{
+				  	object[] methodParams = new object[parameters.Length];
+					methodParams[parameters.Length - 1] = asyncCompleted;
+					method.Invoke(DataContext.Source, methodParams);
+				}
 			}
 		}
 

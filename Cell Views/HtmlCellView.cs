@@ -43,18 +43,12 @@ namespace MonoMobile.Views
 		private WebViewController _WebViewController;
 		public UIWebView Web { get; set; }
 
-		public HtmlCellView(RectangleF frame) : base(frame)
+		public HtmlCellView(IntPtr handle) : base(handle)
 		{
 		}
-		
-		protected override void Dispose(bool disposing)
+
+		public HtmlCellView(RectangleF frame) : base(frame)
 		{
-			if (disposing && _WebViewController != null)
-			{
-				_WebViewController.Dispose();
-			}
-	
-			base.Dispose(disposing);
 		}
 
 		public override void UpdateCell(UITableViewCell cell, MonoTouch.Foundation.NSIndexPath indexPath)
@@ -74,17 +68,14 @@ namespace MonoMobile.Views
 		class WebViewController : UIViewController
 		{
 			private readonly HtmlCellView _Container;
+			
+			public WebViewController(IntPtr handle) : base(handle)
+			{
+			}
 
 			public WebViewController(HtmlCellView container)
 			{
 				_Container = container;
-			}
-
-			protected override void Dispose(bool disposing)
-			{
-				_Container.Dispose();
-
-				base.Dispose(disposing);
 			}
 
 			public override void ViewWillDisappear(bool animated)
